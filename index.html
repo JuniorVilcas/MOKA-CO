@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOKA'CO - Pedidos</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-page: #f4f1ea;
+            --card-bg: #ffffff;
+            --coffee-dark: #3e2723;
+            --coffee-medium: #795548;
+            --coffee-light: #d7ccc8;
+            --accent: #d84315;
+            --success: #2e7d32;
+            --text-main: #3e2723;
+            --text-muted: #8d6e63;
+        }
+
+        body {
+            background-color: var(--bg-page);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            padding: 20px 0;
+            flex-direction: column;
+        }
+
+        /* Toggle de Simulación */
+        .role-toggle {
+            background: #333;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            border: none;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .phone-mockup {
+            width: 375px;
+            height: 812px;
+            background-color: var(--card-bg);
+            border-radius: 40px;
+            box-shadow: 0 25px 50px rgba(62, 39, 35, 0.15);
+            border: 8px solid #ffffff;
+            overflow-y: auto;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .phone-mockup::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Pantalla de Inicio (Splash Screen) */
+        #splash-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #ffffff 0%, #f4f1ea 50%, var(--coffee-light) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            border-radius: 32px;
+            transition: opacity 0.5s ease;
+        }
+
+        .splash-logo {
+            width: 150px;
+            margin-bottom: 20px;
+            filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.1));
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .splash-title {
+            color: var(--coffee-dark);
+            font-size: 28px;
+            font-weight: 800;
+            margin: 0;
+            text-align: center;
+        }
+
+        .splash-subtitle {
+            color: var(--coffee-medium);
+            font-size: 16px;
+            margin: 10px 0 40px 0;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .btn-start {
+            background-color: var(--coffee-dark);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(62, 39, 35, 0.3);
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .btn-start:hover {
+            transform: scale(1.05);
+            background-color: var(--accent);
+        }
+
+        /* Mapa y Logo (Cabecera principal) */
+        .map-section {
+            height: 200px;
+            position: relative;
+            background-color: #e0e0e0;
+            flex-shrink: 0;
+        }
+
+        .map-section iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .floating-logo {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .floating-logo img {
+            width: 70px;
+            display: block;
+        }
+
+        /* Contenido Principal */
+        .main-content {
+            background-color: var(--card-bg);
+            border-top-left-radius: 30px;
+            border-top-right-radius: 30px;
+            padding: 24px;
+            z-index: 10;
+            margin-top: -30px;
+            flex: 1;
+        }
+
+        h2.section-title {
+            font-size: 18px;
+            color: var(--coffee-dark);
+            margin: 0 0 15px 0;
+            border-bottom: 2px solid var(--coffee-light);
+            padding-bottom: 5px;
+        }
+
+        /* Panel Vendedor (Oculto por defecto) */
+        .vendor-panel {
+            background-color: #ffe0b2;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 1px dashed #f57c00;
+            display: none;
+        }
+
+        .vendor-panel p {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            font-weight: bold;
+            color: #e65100;
+            text-align: center;
+        }
+
+        .vendor-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-vendor {
+            flex: 1;
+            padding: 10px;
+            font-size: 12px;
+            border: none;
+            border-radius: 6px;
+            background-color: #fff;
+            color: #e65100;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-vendor:active {
+            background-color: #ffe0b2;
+        }
+
+        /* Notificación Vendedor */
+        .notification-badge {
+            display: none;
+            background: #d32f2f;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        /* Tracker de Cliente */
+        .tracker-container {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin: 20px 0 30px 0;
+            padding: 0 10px;
+        }
+
+        .tracker-line {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            right: 20px;
+            height: 3px;
+            background-color: var(--coffee-light);
+            z-index: 1;
+        }
+
+        .tracker-progress {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            height: 3px;
+            background-color: var(--coffee-dark);
+            z-index: 2;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        .tracker-step {
+            position: relative;
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .step-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--card-bg);
+            border: 3px solid var(--coffee-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--coffee-light);
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .step-text {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        .tracker-step.active .step-icon {
+            border-color: var(--coffee-dark);
+            color: var(--card-bg);
+            background-color: var(--coffee-dark);
+        }
+
+        .tracker-step.active .step-text {
+            color: var(--coffee-dark);
+        }
+
+        /* Menú de Productos */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .product-card {
+            background: var(--bg-page);
+            border: 1px solid var(--coffee-light);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s;
+        }
+        
+        .product-card:active {
+            transform: scale(0.95);
+        }
+
+        .product-card i {
+            font-size: 24px;
+            color: var(--coffee-medium);
+            margin-bottom: 8px;
+        }
+
+        .product-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin: 0 0 4px 0;
+        }
+
+        .product-price {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent);
+            margin: 0 0 10px 0;
+        }
+
+        .btn-add {
+            background-color: var(--coffee-dark);
+            color: #fff;
+            border: none;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+        }
+
+        /* Carrito */
+        .cart-section {
+            background-color: var(--bg-page);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 5px;
+            color: var(--text-main);
+        }
+
+        .cart-total {
+            display: flex;
+            justify-content: space-between;
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--coffee-dark);
+            margin-top: 10px;
+            border-top: 1px solid var(--coffee-light);
+            padding-top: 10px;
+        }
+
+        .btn-pay {
+            background-color: var(--accent);
+            color: #ffffff;
+            border: none;
+            border-radius: 14px;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.3s;
+        }
+
+        .btn-pay:hover {
+            background-color: #bf360c;
+        }
+
+        .btn-boleta {
+            background-color: #333;
+            color: #ffffff;
+            border: none;
+            border-radius: 14px;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        /* Modal Generales */
+        .modal {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            border-radius: 32px;
+            overflow: hidden;
+        }
+
+        /* Checkout Modal */
+        .checkout-container {
+            background: #fff;
+            width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+            border-radius: 20px;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .checkout-container::-webkit-scrollbar { display: none; }
+
+        .checkout-title {
+            text-align: center;
+            color: var(--coffee-dark);
+            margin: 0;
+            font-size: 20px;
+            border-bottom: 2px solid var(--coffee-light);
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--coffee-medium);
+        }
+
+        .form-group input {
+            padding: 10px;
+            border: 1px solid var(--coffee-light);
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: var(--accent);
+        }
+
+        .btn-location {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 1px dashed #1976d2;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-location.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-color: #2e7d32;
+        }
+
+        .yape-box {
+            background: #5A1456; /* Color Yape */
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .yape-box h4 { margin: 0 0 5px 0; font-size: 16px;}
+        .yape-box p { margin: 0; font-size: 24px; font-weight: bold; }
+        .yape-box small { font-size: 11px; opacity: 0.8; }
+
+        .file-upload {
+            border: 2px dashed var(--coffee-light);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            color: var(--text-muted);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .file-upload input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* Loading Pago */
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--success);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .payment-text {
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        /* Ticket Boleta */
+        .ticket {
+            background: #fff;
+            width: 85%;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            max-height: 80%;
+            overflow-y: auto;
+        }
+
+        .ticket h3 {
+            text-align: center;
+            margin: 0 0 10px 0;
+            border-bottom: 1px dashed #ccc;
+            padding-bottom: 10px;
+        }
+
+        .ticket-content {
+            font-size: 12px;
+            margin-bottom: 15px;
+        }
+
+        .close-modal {
+            background: var(--coffee-dark);
+            color: #fff;
+            border: none;
+            padding: 10px;
+            width: 100%;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        /* Modal Verificación Vendedor */
+        .verification-img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            margin: 15px 0;
+            object-fit: contain;
+            border: 2px solid #eee;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Botón para simular el cambio de cuentas -->
+    <button class="role-toggle" onclick="toggleRole()" id="role-btn">
+        <i class="fas fa-user"></i> Viendo como: Cliente
+    </button>
+
+    <div class="phone-mockup">
+        
+        <!-- PANTALLA DE INICIO (SPLASH) -->
+        <div id="splash-screen">
+            <img src="WhatsApp Image 2026-05-27 at 7.24.52 PM (1).svg" alt="MOKA'CO Logo" class="splash-logo" onerror="this.src='https://via.placeholder.com/150?text=Logo'">
+            <h1 class="splash-title">MOKA'CO</h1>
+            <p class="splash-subtitle">LA CASA DEL CAFÉ</p>
+            <button class="btn-start" onclick="iniciarApp()">Adquirir Productos</button>
+        </div>
+
+        <!-- CABECERA DE MAPA -->
+        <div class="map-section" id="app-map" style="display:none;">
+            <div class="floating-logo">
+                <img src="WhatsApp Image 2026-05-27 at 7.24.52 PM (1).svg" alt="MOKA'CO Logo" onerror="this.src='https://via.placeholder.com/70?text=Logo'">
+            </div>
+            <!-- Mapa simulado en iframe de MOKA'CO Piura -->
+            <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d127163.63953556557!2d-80.70823546747192!3d-5.196395459392264!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x904a107c87c71e21%3A0x6b6c0e271bf1b8b8!2sPiura!5e0!3m2!1ses!2spe!4v1700000000000!5m2!1ses!2spe"
+                allowfullscreen="" loading="lazy">
+            </iframe>
+        </div>
+
+        <div class="main-content" id="app-content" style="display:none;">
+
+            <!-- PANEL VENDEDOR (Oculto para el cliente) -->
+            <div class="vendor-panel" id="vendor-panel">
+                <div class="notification-badge" id="order-notification">
+                    <i class="fas fa-bell"></i> ¡NUEVO PEDIDO RECIBIDO!
+                </div>
+                <p><i class="fas fa-mobile-alt"></i> Panel de Control del Vendedor</p>
+                <button class="btn-vendor" id="btn-verificar-pago" style="margin-bottom: 10px; width: 100%; border: 1px solid #d32f2f; background: #ffebee; color: #c62828; display: none;" onclick="abrirVerificarPago()">
+                    <i class="fas fa-search"></i> Verificar Pago Pendiente
+                </button>
+                <button class="btn-vendor" style="margin-bottom: 10px; width: 100%; border: 1px solid #e65100;" onclick="mostrarBoleta()">
+                    <i class="fas fa-receipt"></i> Ver Boleta del Cliente
+                </button>
+                <div class="vendor-controls">
+                    <button class="btn-vendor" onclick="setStatus(1)">Preparando</button>
+                    <button class="btn-vendor" onclick="setStatus(2)">En camino</button>
+                    <button class="btn-vendor" onclick="setStatus(3)">Entregado</button>
+                </div>
+            </div>
+
+            <!-- SECCIÓN CLIENTE -->
+            <div id="customer-view">
+                <h2 class="section-title">Nuestros Productos</h2>
+                <div class="menu-grid">
+                    <div class="product-card">
+                        <i class="fas fa-cookie-bite"></i>
+                        <p class="product-name">Galletas</p>
+                        <p class="product-price">S/ 5.00</p>
+                        <button class="btn-add" onclick="addToCart('Galletas', 5.00)">Agregar</button>
+                    </div>
+                    <div class="product-card">
+                        <i class="fas fa-coffee"></i>
+                        <p class="product-name">Café</p>
+                        <p class="product-price">S/ 8.00</p>
+                        <button class="btn-add" onclick="addToCart('Café', 8.00)">Agregar</button>
+                    </div>
+                    <div class="product-card">
+                        <i class="fas fa-glass-martini-alt"></i>
+                        <p class="product-name">Cóctel de Café</p>
+                        <p class="product-price">S/ 15.00</p>
+                        <button class="btn-add" onclick="addToCart('Cóctel de Café', 15.00)">Agregar</button>
+                    </div>
+                    <div class="product-card">
+                        <i class="fas fa-wine-bottle"></i>
+                        <p class="product-name">Macerados</p>
+                        <p class="product-price">S/ 20.00</p>
+                        <button class="btn-add" onclick="addToCart('Macerados', 20.00)">Agregar</button>
+                    </div>
+                </div>
+
+                <h2 class="section-title">Tu Pedido</h2>
+                <div class="cart-section">
+                    <div id="cart-items">
+                        <div style="text-align:center; color: var(--text-muted); font-size: 12px;">El carrito está vacío
+                        </div>
+                    </div>
+                    <div class="cart-total">
+                        <span>Total a pagar:</span>
+                        <span id="cart-total-price">S/ 0.00</span>
+                    </div>
+                </div>
+
+                <button class="btn-pay" id="btn-pay" onclick="abrirCheckout()">
+                    <i class="fas fa-shopping-cart"></i> Continuar Compra
+                </button>
+
+                <div id="customer-pending-msg" style="display: none; background: #e3f2fd; padding: 15px; border-radius: 12px; text-align: center; border: 1px dashed #1976d2; margin-bottom: 15px;">
+                    <i class="fas fa-clock" style="font-size: 24px; color: #1976d2; margin-bottom: 10px;"></i>
+                    <p style="margin: 0; color: #1976d2; font-weight: bold;">Esperando verificación del vendedor...</p>
+                    <small style="color: #555;">Validaremos tu Yape para generar la boleta.</small>
+                </div>
+
+                <button class="btn-boleta" id="btn-boleta" onclick="mostrarBoleta()">
+                    <i class="fas fa-receipt"></i> Ver Boleta
+                </button>
+
+                <div id="thanks-msg" style="display: none; background: #e8f5e9; padding: 15px; border-radius: 12px; text-align: center; border: 1px dashed #2e7d32; margin-top: 15px;">
+                    <i class="fas fa-heart" style="font-size: 24px; color: #2e7d32; margin-bottom: 10px;"></i>
+                    <p style="margin: 0; color: #2e7d32; font-weight: bold; font-size: 18px;">¡Gracias por tu compra!</p>
+                    <small style="color: #2e7d32;">Esperamos que disfrutes tus productos.</small>
+                </div>
+            </div>
+
+            <h2 class="section-title" style="margin-top: 20px;">Estado de Entrega</h2>
+            <div class="tracker-container">
+                <div class="tracker-line"></div>
+                <div class="tracker-progress" id="progress-bar"></div>
+                <div class="tracker-step" id="step-1">
+                    <div class="step-icon"><i class="fas fa-blender"></i></div><span
+                        class="step-text">Preparando<br>Pedido</span>
+                </div>
+                <div class="tracker-step" id="step-2">
+                    <div class="step-icon"><i class="fas fa-motorcycle"></i></div><span
+                        class="step-text">En<br>Camino</span>
+                </div>
+                <div class="tracker-step" id="step-3">
+                    <div class="step-icon"><i class="fas fa-box-open"></i></div><span class="step-text">Entregado</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Modales -->
+
+        <!-- Checkout Modal (Formulario, Delivery, Yape) -->
+        <div class="modal" id="checkout-modal">
+            <div class="checkout-container">
+                <h3 class="checkout-title">Datos de Envío y Pago</h3>
+                
+                <div class="form-group">
+                    <label>Nombre y Apellidos:</label>
+                    <input type="text" id="cliente-nombre" placeholder="Ej. Juan Pérez" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Dirección de entrega:</label>
+                    <input type="text" id="cliente-direccion" placeholder="Ej. Av. Grau 123" required>
+                </div>
+
+                <button class="btn-location" id="btn-location" onclick="simularUbicacion()">
+                    <i class="fas fa-map-marker-alt"></i> Compartir mi ubicación (Google Maps)
+                </button>
+
+                <div class="yape-box">
+                    <h4>Paga con Yape al:</h4>
+                    <p>902646067</p>
+                    <small>MOKA'CO LA CASA DEL CAFÉ</small>
+                </div>
+
+                <div class="form-group">
+                    <label style="text-align: center;">Monto a Yapear:</label>
+                    <h3 style="text-align: center; color: var(--accent); margin: 0;" id="checkout-total">S/ 0.00</h3>
+                </div>
+
+                <div class="file-upload">
+                    <i class="fas fa-camera" style="font-size: 24px; margin-bottom: 10px;"></i>
+                    <p style="margin: 0; font-size: 13px;">Sube aquí la captura de tu Yape</p>
+                    <input type="file" id="yape-screenshot" accept="image/*" onchange="validarImagen(this)">
+                    <small id="file-name" style="color: var(--success); display: block; margin-top: 5px; font-weight: bold;"></small>
+                </div>
+
+                <button class="btn-pay" style="margin-top: 10px;" onclick="confirmarPedido()">
+                    Confirmar Pedido
+                </button>
+                <button class="close-modal" onclick="cerrarModal('checkout-modal')" style="background: #ccc; color: #333;">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+
+        <!-- Modal Verificacion Vendor -->
+        <div class="modal" id="verificar-modal">
+            <div class="checkout-container">
+                <h3 class="checkout-title">Verificar Pago (Yape)</h3>
+                <p style="text-align: center; font-size: 13px; color: var(--text-muted);">Por favor revisa la captura subida por el cliente.</p>
+                
+                <div style="text-align: center;">
+                    <img id="verificar-img" class="verification-img" src="" alt="Captura Yape">
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button class="btn-pay" style="background: var(--success); flex: 1;" onclick="aprobarPago()">
+                        <i class="fas fa-check"></i> Aprobar
+                    </button>
+                    <button class="btn-pay" style="background: #d32f2f; flex: 1;" onclick="rechazarPago()">
+                        <i class="fas fa-times"></i> Rechazar
+                    </button>
+                </div>
+                <button class="close-modal" onclick="cerrarModal('verificar-modal')" style="margin-top: 10px; background: #ccc; color: #333;">Cerrar sin decidir</button>
+            </div>
+        </div>
+
+        <div class="modal" id="payment-modal">
+            <div class="loader"></div>
+            <div class="payment-text" id="payment-status-text">Procesando...</div>
+        </div>
+
+        <div class="modal" id="boleta-modal">
+            <div class="ticket">
+                <h3>MOKA'CO<br><small>LA CASA DEL CAFÉ</small></h3>
+                <div class="ticket-content" id="ticket-details"></div>
+                <button class="close-modal" onclick="cerrarModal('boleta-modal')">Cerrar Boleta</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let isVendorMode = false;
+        let carrito = [];
+        let total = 0;
+        let pedidoPagado = false;
+        let ubicacionLista = false;
+        let imagenSubida = false;
+        let imgUrl = "";
+        let clienteDatos = {nombre: "", direccion: ""};
+
+        // --- SPLASH SCREEN ---
+        function iniciarApp() {
+            document.getElementById('splash-screen').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('splash-screen').style.display = 'none';
+                document.getElementById('app-map').style.display = 'block';
+                document.getElementById('app-content').style.display = 'block';
+            }, 500);
+        }
+
+        // --- LÓGICA DE ROLES ---
+        function toggleRole() {
+            if (!isVendorMode) {
+                // Intentar entrar a modo vendedor
+                const password = prompt("Modo Vendedor protegido. Ingrese la contraseña:");
+                if (password === "admin123") {
+                    activarVendedor();
+                } else {
+                    alert("Contraseña incorrecta. Acceso denegado.");
+                }
+            } else {
+                // Salir de modo vendedor (volver a cliente)
+                desactivarVendedor();
+            }
+        }
+
+        function activarVendedor() {
+            isVendorMode = true;
+            const btn = document.getElementById('role-btn');
+            const vendorPanel = document.getElementById('vendor-panel');
+            const customerView = document.getElementById('customer-view');
+            
+            btn.innerHTML = '<i class="fas fa-store"></i> Viendo como: Vendedor';
+            btn.style.background = '#e65100';
+            vendorPanel.style.display = 'block';
+            if(customerView) customerView.style.display = 'none';
+        }
+
+        function desactivarVendedor() {
+            isVendorMode = false;
+            const btn = document.getElementById('role-btn');
+            const vendorPanel = document.getElementById('vendor-panel');
+            const customerView = document.getElementById('customer-view');
+
+            btn.innerHTML = '<i class="fas fa-user"></i> Viendo como: Cliente';
+            btn.style.background = '#333';
+            vendorPanel.style.display = 'none';
+            if(customerView) customerView.style.display = 'block';
+            document.getElementById('order-notification').style.display = 'none'; 
+        }
+
+        // --- LÓGICA DEL CARRITO ---
+        function addToCart(nombre, precio) {
+            if (pedidoPagado) {
+                alert("Ya tienes un pedido en curso. Espera a que sea entregado o recarga la página.");
+                return;
+            }
+            carrito.push({ nombre, precio });
+            total += precio;
+            actualizarCarritoUI();
+        }
+
+        function actualizarCarritoUI() {
+            const contenedor = document.getElementById('cart-items');
+            contenedor.innerHTML = '';
+            if (carrito.length === 0) {
+                contenedor.innerHTML = '<div style="text-align:center; color: #888; font-size: 12px;">El carrito está vacío</div>';
+                document.getElementById('cart-total-price').innerText = 'S/ 0.00';
+                return;
+            }
+            carrito.forEach((item) => {
+                contenedor.innerHTML += `<div class="cart-item"><span>1x ${item.nombre}</span><span>S/ ${item.precio.toFixed(2)}</span></div>`;
+            });
+            document.getElementById('cart-total-price').innerText = `S/ ${total.toFixed(2)}`;
+            document.getElementById('checkout-total').innerText = `S/ ${total.toFixed(2)}`;
+        }
+
+        // --- CHECKOUT Y FLUJO DE COMPRA ---
+        function abrirCheckout() {
+            if (carrito.length === 0) {
+                alert("Tu carrito está vacío. Agrega productos primero.");
+                return;
+            }
+            document.getElementById('checkout-modal').style.display = 'flex';
+        }
+
+        function simularUbicacion() {
+            const btnLoc = document.getElementById('btn-location');
+            btnLoc.innerHTML = '<i class="fas fa-check-circle"></i> Ubicación obtenida';
+            btnLoc.classList.add('success');
+            ubicacionLista = true;
+        }
+
+        function validarImagen(input) {
+            if(input.files && input.files[0]) {
+                imagenSubida = true;
+                // Create object URL to preview the image uploaded by the customer in vendor mode
+                imgUrl = URL.createObjectURL(input.files[0]);
+                document.getElementById('file-name').innerText = "Imagen cargada: " + input.files[0].name;
+            } else {
+                imagenSubida = false;
+                imgUrl = "";
+                document.getElementById('file-name').innerText = "";
+            }
+        }
+
+        function confirmarPedido() {
+            const nombre = document.getElementById('cliente-nombre').value;
+            const direccion = document.getElementById('cliente-direccion').value;
+
+            if (!nombre || !direccion) {
+                alert("Por favor, ingresa tu nombre y dirección.");
+                return;
+            }
+            if (!ubicacionLista) {
+                alert("Por favor, comparte tu ubicación.");
+                return;
+            }
+            if (!imagenSubida) {
+                alert("Por favor, sube la captura de tu Yape.");
+                return;
+            }
+
+            clienteDatos.nombre = nombre;
+            clienteDatos.direccion = direccion;
+
+            // Ocultar modal de checkout y mostrar modal de carga
+            cerrarModal('checkout-modal');
+            const modalPago = document.getElementById('payment-modal');
+            const statusText = document.getElementById('payment-status-text');
+            const loader = document.querySelector('.loader');
+
+            modalPago.style.display = 'flex';
+            statusText.innerText = "Enviando captura...";
+            loader.style.display = 'block';
+
+            // Simular envío de pedido (2 segundos)
+            setTimeout(() => {
+                loader.style.display = 'none';
+                statusText.innerText = "¡Enviado al Vendedor!";
+
+                setTimeout(() => {
+                    modalPago.style.display = 'none';
+                    pedidoPagado = true; // prevent more cart additions
+
+                    // Cambiar UI Cliente a pendiente
+                    document.getElementById('btn-pay').style.display = 'none';
+                    document.getElementById('customer-pending-msg').style.display = 'block';
+
+                    // Notificar al Vendedor
+                    notificarVendedor();
+                    document.getElementById('btn-verificar-pago').style.display = 'block';
+                }, 1500);
+            }, 2000);
+        }
+
+        function notificarVendedor() {
+            // Activa la alerta visual roja en el panel del vendedor
+            document.getElementById('order-notification').style.display = 'block';
+        }
+        
+        // --- VENDOR VERIFICACIÓN DE PAGO ---
+        function abrirVerificarPago() {
+            document.getElementById('verificar-modal').style.display = 'flex';
+            document.getElementById('verificar-img').src = imgUrl || "https://via.placeholder.com/300x500?text=Sin+Imagen";
+        }
+
+        function aprobarPago() {
+            cerrarModal('verificar-modal');
+            document.getElementById('btn-verificar-pago').style.display = 'none';
+            document.getElementById('order-notification').style.display = 'none';
+            
+            // Actualizar vista del cliente (se revelará cuando cierre sesión de vendor o abra de otro lado, acá está unificado)
+            document.getElementById('customer-pending-msg').style.display = 'none';
+            document.getElementById('btn-boleta').style.display = 'flex';
+            
+            setStatus(1); // Preparando pedido
+            generarBoleta(clienteDatos.nombre, clienteDatos.direccion);
+            alert("Pago aprobado. Se generó la boleta y el pedido está Preparándose.");
+        }
+
+        function rechazarPago() {
+            cerrarModal('verificar-modal');
+            document.getElementById('btn-verificar-pago').style.display = 'none';
+            document.getElementById('order-notification').style.display = 'none';
+            
+            // Cliente ve compra anulada
+            const pendingMsg = document.getElementById('customer-pending-msg');
+            pendingMsg.style.background = '#ffebee';
+            pendingMsg.style.borderColor = '#c62828';
+            pendingMsg.innerHTML = '<i class="fas fa-times-circle" style="font-size: 24px; color: #c62828; margin-bottom: 10px;"></i><p style="margin: 0; color: #c62828; font-weight: bold;">Compra Anulada</p><small style="color: #555;">La captura de Yape no pudo ser verificada.</small>';
+            
+            alert("Pago rechazado. La compra fue anulada.");
+        }
+
+        // --- LÓGICA DE BOLETA ---
+        function generarBoleta(nombre, direccion) {
+            const ticketDetails = document.getElementById('ticket-details');
+            let fecha = new Date().toLocaleString('es-PE');
+            let htmlBoleta = `
+                <p><strong>Fecha:</strong> ${fecha}</p>
+                <p><strong>Cliente:</strong> ${nombre}</p>
+                <p><strong>Entrega en:</strong> ${direccion}</p>
+                <p><strong>Estado Pago:</strong> VERIFICADO (YAPE)</p>
+                <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
+            `;
+            
+            htmlBoleta += `<table style="width: 100%; text-align: left;"><tr><th>Cant.</th><th>Descripción</th><th style="text-align:right;">Importe</th></tr>`;
+
+            carrito.forEach(item => {
+                htmlBoleta += `<tr><td>1</td><td>${item.nombre}</td><td style="text-align:right;">S/ ${item.precio.toFixed(2)}</td></tr>`;
+            });
+
+            htmlBoleta += `</table><hr style="border-top: 1px dashed #ccc; margin: 10px 0;">`;
+            htmlBoleta += `<h3 style="text-align:right; margin:0;">TOTAL PAGADO: S/ ${total.toFixed(2)}</h3>`;
+            ticketDetails.innerHTML = htmlBoleta;
+        }
+
+        function mostrarBoleta() { document.getElementById('boleta-modal').style.display = 'flex'; }
+        function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // --- LÓGICA DEL TRACKER (VENDEDOR) ---
+        function setStatus(stepNumber) {
+            document.getElementById('step-1').classList.remove('active');
+            document.getElementById('step-2').classList.remove('active');
+            document.getElementById('step-3').classList.remove('active');
+
+            let progress = stepNumber === 1 ? "0%" : (stepNumber === 2 ? "50%" : "100%");
+            document.getElementById('progress-bar').style.width = progress;
+
+            for (let i = 1; i <= stepNumber; i++) {
+                document.getElementById(`step-${i}`).classList.add('active');
+            }
+
+            const thanksMsg = document.getElementById('thanks-msg');
+            if (thanksMsg) {
+                if (stepNumber === 3) {
+                    thanksMsg.style.display = 'block';
+                } else {
+                    thanksMsg.style.display = 'none';
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>
