@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MOKA'CO - Pedidos</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <style>
         :root {
             --bg-page: #f4f1ea;
@@ -84,14 +87,22 @@
         .splash-logo {
             width: 150px;
             margin-bottom: 20px;
-            filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.1));
+            filter: drop-shadow(0px 10px 15px rgba(0, 0, 0, 0.1));
             animation: float 3s ease-in-out infinite;
         }
 
         @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
         }
 
         .splash-title {
@@ -235,9 +246,17 @@
         }
 
         @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.02);
+            }
+
+            100% {
+                transform: scale(1);
+            }
         }
 
         /* Tracker de Cliente */
@@ -330,7 +349,7 @@
             justify-content: space-between;
             transition: transform 0.2s;
         }
-        
+
         .product-card:active {
             transform: scale(0.95);
         }
@@ -463,7 +482,9 @@
             gap: 15px;
         }
 
-        .checkout-container::-webkit-scrollbar { display: none; }
+        .checkout-container::-webkit-scrollbar {
+            display: none;
+        }
 
         .checkout-title {
             text-align: center;
@@ -520,16 +541,29 @@
         }
 
         .yape-box {
-            background: #5A1456; /* Color Yape */
+            background: #5A1456;
+            /* Color Yape */
             color: white;
             padding: 15px;
             border-radius: 12px;
             text-align: center;
         }
 
-        .yape-box h4 { margin: 0 0 5px 0; font-size: 16px;}
-        .yape-box p { margin: 0; font-size: 24px; font-weight: bold; }
-        .yape-box small { font-size: 11px; opacity: 0.8; }
+        .yape-box h4 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+        }
+
+        .yape-box p {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .yape-box small {
+            font-size: 11px;
+            opacity: 0.8;
+        }
 
         .file-upload {
             border: 2px dashed var(--coffee-light);
@@ -563,8 +597,13 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .payment-text {
@@ -609,7 +648,7 @@
             cursor: pointer;
             font-weight: bold;
         }
-        
+
         /* Modal Verificación Vendedor */
         .verification-img {
             max-width: 100%;
@@ -618,6 +657,79 @@
             margin: 15px 0;
             object-fit: contain;
             border: 2px solid #eee;
+        }
+
+        /* Estilos de Pedidos en Modo Vendedor */
+        .vendor-order-item {
+            padding: 10px;
+            border-radius: 8px;
+            background: #fdfbf7;
+            border: 1px solid var(--coffee-light);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .vendor-order-item:hover {
+            border-color: var(--coffee-medium);
+            background: #f5f0e6;
+        }
+
+        .vendor-order-item.active {
+            border-color: var(--accent);
+            background: #ffe0b2;
+            box-shadow: 0 2px 8px rgba(216, 67, 21, 0.15);
+        }
+
+        .vendor-order-name {
+            font-weight: 600;
+            color: var(--coffee-dark);
+        }
+
+        .vendor-order-meta {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .order-status-badge {
+            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-pendiente {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+
+        .status-preparando {
+            background: #e3f2fd;
+            color: #1565c0;
+            border: 1px solid #bbdefb;
+        }
+
+        .status-camino {
+            background: #fff3e0;
+            color: #e65100;
+            border: 1px solid #ffe0b2;
+        }
+
+        .status-entregado {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+
+        .status-rechazado {
+            background: #efebe9;
+            color: #4e342e;
+            border: 1px solid #d7ccc8;
         }
     </style>
 </head>
@@ -630,25 +742,23 @@
     </button>
 
     <div class="phone-mockup">
-        
+
         <!-- PANTALLA DE INICIO (SPLASH) -->
         <div id="splash-screen">
-            <img src="WhatsApp Image 2026-05-27 at 7.24.52 PM (1).svg" alt="MOKA'CO Logo" class="splash-logo" onerror="this.src='https://via.placeholder.com/150?text=Logo'">
+            <img src="WhatsApp Image 2026-05-27 at 7.24.52 PM (1).svg" alt="MOKA'CO Logo" class="splash-logo"
+                onerror="this.src='https://via.placeholder.com/150?text=Logo'">
             <h1 class="splash-title">MOKA'CO</h1>
             <p class="splash-subtitle">LA CASA DEL CAFÉ</p>
             <button class="btn-start" onclick="iniciarApp()">Adquirir Productos</button>
         </div>
 
         <!-- CABECERA DE MAPA -->
-        <div class="map-section" id="app-map" style="display:none;">
-            <div class="floating-logo">
-                <img src="WhatsApp Image 2026-05-27 at 7.24.52 PM (1).svg" alt="MOKA'CO Logo" onerror="this.src='https://via.placeholder.com/70?text=Logo'">
+        <div class="map-section" id="app-map" style="display:none; position: relative;">
+            <div class="floating-logo" style="z-index: 1000;">
+                <img src="WhatsApp Image 2026-05-27 at 7.24.52 PM (1).svg" alt="MOKA'CO Logo"
+                    onerror="this.src='https://via.placeholder.com/70?text=Logo'">
             </div>
-            <!-- Mapa simulado en iframe de MOKA'CO Piura -->
-            <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d127163.63953556557!2d-80.70823546747192!3d-5.196395459392264!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x904a107c87c71e21%3A0x6b6c0e271bf1b8b8!2sPiura!5e0!3m2!1ses!2spe!4v1700000000000!5m2!1ses!2spe"
-                allowfullscreen="" loading="lazy">
-            </iframe>
+            <div id="map" style="width: 100%; height: 100%; z-index: 1;"></div>
         </div>
 
         <div class="main-content" id="app-content" style="display:none;">
@@ -659,16 +769,44 @@
                     <i class="fas fa-bell"></i> ¡NUEVO PEDIDO RECIBIDO!
                 </div>
                 <p><i class="fas fa-mobile-alt"></i> Panel de Control del Vendedor</p>
-                <button class="btn-vendor" id="btn-verificar-pago" style="margin-bottom: 10px; width: 100%; border: 1px solid #d32f2f; background: #ffebee; color: #c62828; display: none;" onclick="abrirVerificarPago()">
-                    <i class="fas fa-search"></i> Verificar Pago Pendiente
-                </button>
-                <button class="btn-vendor" style="margin-bottom: 10px; width: 100%; border: 1px solid #e65100;" onclick="mostrarBoleta()">
-                    <i class="fas fa-receipt"></i> Ver Boleta del Cliente
-                </button>
-                <div class="vendor-controls">
-                    <button class="btn-vendor" onclick="setStatus(1)">Preparando</button>
-                    <button class="btn-vendor" onclick="setStatus(2)">En camino</button>
-                    <button class="btn-vendor" onclick="setStatus(3)">Entregado</button>
+
+                <!-- Lista de Pedidos -->
+                <div id="vendor-orders-container"
+                    style="max-height: 180px; overflow-y: auto; margin-bottom: 15px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid var(--coffee-light);">
+                    <h4
+                        style="margin: 0 0 8px 0; color: var(--coffee-dark); font-size: 13px; border-bottom: 1px solid #eee; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+                        <span>Pedidos Activos:</span>
+                        <span id="order-count-badge"
+                            style="background: var(--accent); color: white; border-radius: 10px; padding: 2px 6px; font-size: 10px; font-weight: bold;">0</span>
+                    </h4>
+                    <div id="vendor-orders-list" style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="text-align: center; color: var(--text-muted); font-size: 11px; padding: 10px 0;">No
+                            hay pedidos activos</div>
+                    </div>
+                </div>
+
+                <!-- Detalle del Pedido Seleccionado -->
+                <div id="vendor-selected-order-details"
+                    style="display: none; background: #fff; padding: 12px; border-radius: 8px; border: 1px solid var(--coffee-light); margin-bottom: 15px;">
+                    <h4 id="selected-client-title"
+                        style="margin: 0 0 8px 0; color: var(--coffee-dark); font-size: 13px; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+                        Cliente: -</h4>
+                    <div id="selected-order-items"
+                        style="font-size: 11px; color: var(--text-main); margin-bottom: 8px;"></div>
+                    <button class="btn-vendor" id="btn-verificar-pago"
+                        style="margin-bottom: 8px; width: 100%; border: 1px solid #d32f2f; background: #ffebee; color: #c62828; display: none;"
+                        onclick="abrirVerificarPago()">
+                        <i class="fas fa-search"></i> Verificar Pago Pendiente
+                    </button>
+                    <button class="btn-vendor" style="margin-bottom: 8px; width: 100%; border: 1px solid #e65100;"
+                        onclick="mostrarBoleta()">
+                        <i class="fas fa-receipt"></i> Ver Boleta del Cliente
+                    </button>
+                    <div class="vendor-controls">
+                        <button class="btn-vendor" onclick="setStatus(1)">Preparando</button>
+                        <button class="btn-vendor" onclick="setStatus(2)">En camino</button>
+                        <button class="btn-vendor" onclick="setStatus(3)">Entregado</button>
+                    </div>
                 </div>
             </div>
 
@@ -718,19 +856,27 @@
                     <i class="fas fa-shopping-cart"></i> Continuar Compra
                 </button>
 
-                <div id="customer-pending-msg" style="display: none; background: #e3f2fd; padding: 15px; border-radius: 12px; text-align: center; border: 1px dashed #1976d2; margin-bottom: 15px;">
+                <div id="customer-pending-msg"
+                    style="display: none; background: #e3f2fd; padding: 15px; border-radius: 12px; text-align: center; border: 1px dashed #1976d2; margin-bottom: 15px;">
                     <i class="fas fa-clock" style="font-size: 24px; color: #1976d2; margin-bottom: 10px;"></i>
                     <p style="margin: 0; color: #1976d2; font-weight: bold;">Esperando verificación del vendedor...</p>
                     <small style="color: #555;">Validaremos tu Yape para generar la boleta.</small>
+
+                    <a id="btn-whatsapp-share" href="#" target="_blank"
+                        style="display: none; background-color: #25D366; color: white; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 15px; align-items: center; justify-content: center; gap: 8px; transition: background 0.3s;">
+                        <i class="fab fa-whatsapp" style="font-size: 20px;"></i> Enviar ubicación por WhatsApp
+                    </a>
                 </div>
 
                 <button class="btn-boleta" id="btn-boleta" onclick="mostrarBoleta()">
                     <i class="fas fa-receipt"></i> Ver Boleta
                 </button>
 
-                <div id="thanks-msg" style="display: none; background: #e8f5e9; padding: 15px; border-radius: 12px; text-align: center; border: 1px dashed #2e7d32; margin-top: 15px;">
+                <div id="thanks-msg"
+                    style="display: none; background: #e8f5e9; padding: 15px; border-radius: 12px; text-align: center; border: 1px dashed #2e7d32; margin-top: 15px;">
                     <i class="fas fa-heart" style="font-size: 24px; color: #2e7d32; margin-bottom: 10px;"></i>
-                    <p style="margin: 0; color: #2e7d32; font-weight: bold; font-size: 18px;">¡Gracias por tu compra!</p>
+                    <p style="margin: 0; color: #2e7d32; font-weight: bold; font-size: 18px;">¡Gracias por tu compra!
+                    </p>
                     <small style="color: #2e7d32;">Esperamos que disfrutes tus productos.</small>
                 </div>
             </div>
@@ -760,7 +906,7 @@
         <div class="modal" id="checkout-modal">
             <div class="checkout-container">
                 <h3 class="checkout-title">Datos de Envío y Pago</h3>
-                
+
                 <div class="form-group">
                     <label>Nombre y Apellidos:</label>
                     <input type="text" id="cliente-nombre" placeholder="Ej. Juan Pérez" required>
@@ -790,13 +936,15 @@
                     <i class="fas fa-camera" style="font-size: 24px; margin-bottom: 10px;"></i>
                     <p style="margin: 0; font-size: 13px;">Sube aquí la captura de tu Yape</p>
                     <input type="file" id="yape-screenshot" accept="image/*" onchange="validarImagen(this)">
-                    <small id="file-name" style="color: var(--success); display: block; margin-top: 5px; font-weight: bold;"></small>
+                    <small id="file-name"
+                        style="color: var(--success); display: block; margin-top: 5px; font-weight: bold;"></small>
                 </div>
 
                 <button class="btn-pay" style="margin-top: 10px;" onclick="confirmarPedido()">
                     Confirmar Pedido
                 </button>
-                <button class="close-modal" onclick="cerrarModal('checkout-modal')" style="background: #ccc; color: #333;">
+                <button class="close-modal" onclick="cerrarModal('checkout-modal')"
+                    style="background: #ccc; color: #333;">
                     Cancelar
                 </button>
             </div>
@@ -806,8 +954,9 @@
         <div class="modal" id="verificar-modal">
             <div class="checkout-container">
                 <h3 class="checkout-title">Verificar Pago (Yape)</h3>
-                <p style="text-align: center; font-size: 13px; color: var(--text-muted);">Por favor revisa la captura subida por el cliente.</p>
-                
+                <p style="text-align: center; font-size: 13px; color: var(--text-muted);">Por favor revisa la captura
+                    subida por el cliente.</p>
+
                 <div style="text-align: center;">
                     <img id="verificar-img" class="verification-img" src="" alt="Captura Yape">
                 </div>
@@ -820,7 +969,8 @@
                         <i class="fas fa-times"></i> Rechazar
                     </button>
                 </div>
-                <button class="close-modal" onclick="cerrarModal('verificar-modal')" style="margin-top: 10px; background: #ccc; color: #333;">Cerrar sin decidir</button>
+                <button class="close-modal" onclick="cerrarModal('verificar-modal')"
+                    style="margin-top: 10px; background: #ccc; color: #333;">Cerrar sin decidir</button>
             </div>
         </div>
 
@@ -840,14 +990,46 @@
     </div>
 
     <script>
+        const STORE_ID = "moka_co_piura_default"; // Identificador único para el canal de MQTT (puedes cambiarlo)
         let isVendorMode = false;
         let carrito = [];
         let total = 0;
-        let pedidoPagado = false;
+
+        // Elementos de Leaflet Map
+        let map = null;
+        let shopMarker = null;
+        let clientMarkers = {}; // orderId -> marcador de Leaflet
+        const shopCoords = [-5.196395, -80.708235]; // Ubicación de MOKA'CO en Piura
+
+        // Iconos SVG para Leaflet
+        const coffeeSVG = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#3e2723" width="36px" height="36px">
+                <circle cx="12" cy="12" r="10" fill="#fff" stroke="#3e2723" stroke-width="2"/>
+                <path d="M6 15c0 1.1.9 2 2 2h6c1.1 0 2-.9 2-2V8H6v7zm10-5h1c.6 0 1-.4 1-1s-.4-1-1-1h-1v2z" />
+            </svg>
+        `;
+        const clientSVG = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#d84315" width="32px" height="32px">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+        `;
+
+        // Instancia MQTT
+        let mqttClient = null;
+
+        // Estado del Cliente
+        let myOrderId = localStorage.getItem('moka_client_order_id') || null;
+        let myOrderStatus = null;
+        let clienteDatos = { nombre: "", direccion: "", lat: null, lng: null };
+        let yapeBase64 = ""; // Captura optimizada
         let ubicacionLista = false;
         let imagenSubida = false;
-        let imgUrl = "";
-        let clienteDatos = {nombre: "", direccion: ""};
+        let watchId = null;
+        let locationInterval = null;
+
+        // Estado del Vendedor
+        let ordersMap = {}; // orderId -> datos del pedido
+        let selectedOrderId = null; // ID del pedido seleccionado
 
         // --- SPLASH SCREEN ---
         function iniciarApp() {
@@ -856,13 +1038,436 @@
                 document.getElementById('splash-screen').style.display = 'none';
                 document.getElementById('app-map').style.display = 'block';
                 document.getElementById('app-content').style.display = 'block';
+
+                // Inicializar mapa y reconectar MQTT
+                initMap();
+                setTimeout(() => {
+                    if (map) map.invalidateSize();
+                }, 100);
+
+                connectMQTT();
+                checkExistingOrder();
             }, 500);
         }
 
-        // --- LÓGICA DE ROLES ---
+        // --- INICIALIZAR MAPA INTERACTIVO (LEAFLET) ---
+        function initMap() {
+            if (map) return;
+            map = L.map('map').setView(shopCoords, 14);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
+
+            const coffeeIcon = L.divIcon({
+                html: coffeeSVG,
+                className: 'custom-shop-icon',
+                iconSize: [36, 36],
+                iconAnchor: [18, 18],
+                popupAnchor: [0, -18]
+            });
+
+            shopMarker = L.marker(shopCoords, { icon: coffeeIcon }).addTo(map);
+            shopMarker.bindPopup("<b>MOKA'CO</b><br>La Casa del Café").openPopup();
+        }
+
+        // --- CONEXIÓN MQTT EN TIEMPO REAL ---
+        function connectMQTT() {
+            if (mqttClient) return;
+
+            // Conectar al broker público EMQX sobre websockets con soporte HTTPS (puerto 8084)
+            mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+
+            mqttClient.on('connect', () => {
+                console.log('Conectado al broker de mensajería MQTT');
+
+                if (isVendorMode) {
+                    subscribeToVendorTopics();
+                } else if (myOrderId) {
+                    subscribeToClientTopics(myOrderId);
+                }
+            });
+
+            mqttClient.on('message', (topic, payload) => {
+                try {
+                    const messageStr = payload.toString();
+                    if (!messageStr) return; // Si el mensaje está vacío (borrado de retenido)
+
+                    const data = JSON.parse(messageStr);
+
+                    if (isVendorMode) {
+                        // Recibir nuevos pedidos
+                        if (topic.startsWith(`moka_co/orders/${STORE_ID}/`)) {
+                            handleVendorIncomingOrder(data);
+                        }
+                        // Recibir ubicaciones en tiempo real
+                        else if (topic.startsWith(`moka_co/locations/${STORE_ID}/`)) {
+                            handleVendorIncomingLocation(data);
+                        }
+                    } else {
+                        // Recibir cambios de estado en mi pedido (como cliente)
+                        if (topic === `moka_co/status/${STORE_ID}/${myOrderId}`) {
+                            handleClientStatusChange(data);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error al procesar mensaje MQTT:", e);
+                }
+            });
+        }
+
+        // --- LOGICA DEL CLIENTE ---
+        function checkExistingOrder() {
+            if (myOrderId) {
+                subscribeToClientTopics(myOrderId);
+
+                const savedOrder = localStorage.getItem('moka_client_order_details');
+                if (savedOrder) {
+                    try {
+                        const orderObj = JSON.parse(savedOrder);
+                        carrito = orderObj.carrito;
+                        total = orderObj.total;
+                        clienteDatos = orderObj.clienteDatos;
+                        actualizarCarritoUI();
+
+                        // Mostrar marcador en el mapa del cliente
+                        if (clienteDatos.lat && clienteDatos.lng) {
+                            updateClientMarkerOnMap(myOrderId, "Mi Ubicación", clienteDatos.lat, clienteDatos.lng, 0);
+                        }
+
+                        // Reiniciar rastreo GPS
+                        startTracking(myOrderId);
+                    } catch (e) {
+                        console.error("Error al cargar pedido guardado:", e);
+                    }
+                }
+            }
+        }
+
+        function subscribeToClientTopics(orderId) {
+            if (mqttClient && mqttClient.connected) {
+                mqttClient.subscribe(`moka_co/status/${STORE_ID}/${orderId}`);
+            }
+        }
+
+        function handleClientStatusChange(data) {
+            myOrderStatus = data.status;
+
+            const pendingMsg = document.getElementById('customer-pending-msg');
+            const btnPay = document.getElementById('btn-pay');
+            const btnBoleta = document.getElementById('btn-boleta');
+            const thanksMsg = document.getElementById('thanks-msg');
+
+            if (myOrderStatus === 0) {
+                btnPay.style.display = 'none';
+                pendingMsg.style.display = 'block';
+                pendingMsg.style.background = '#e3f2fd';
+                pendingMsg.style.borderColor = '#1976d2';
+                pendingMsg.innerHTML = '<i class="fas fa-clock" style="font-size: 24px; color: #1976d2; margin-bottom: 10px;"></i><p style="margin: 0; color: #1976d2; font-weight: bold;">Esperando verificación del vendedor...</p><small style="color: #555;">Validaremos tu Yape para generar la boleta.</small>';
+                btnBoleta.style.display = 'none';
+            }
+            else if (myOrderStatus === 1) {
+                btnPay.style.display = 'none';
+                pendingMsg.style.display = 'none';
+                btnBoleta.style.display = 'flex';
+                setStatusTrackerUI(1);
+            }
+            else if (myOrderStatus === 2) {
+                btnPay.style.display = 'none';
+                pendingMsg.style.display = 'none';
+                btnBoleta.style.display = 'flex';
+                setStatusTrackerUI(2);
+            }
+            else if (myOrderStatus === 3) {
+                btnPay.style.display = 'none';
+                pendingMsg.style.display = 'none';
+                btnBoleta.style.display = 'flex';
+                setStatusTrackerUI(3);
+
+                // Pedido completado: limpiamos localstorage para nueva compra
+                localStorage.removeItem('moka_client_order_id');
+                localStorage.removeItem('moka_client_order_details');
+                stopTracking();
+            }
+            else if (myOrderStatus === -1) {
+                btnPay.style.display = 'flex';
+                pendingMsg.style.display = 'block';
+                pendingMsg.style.background = '#ffebee';
+                pendingMsg.style.borderColor = '#c62828';
+                pendingMsg.innerHTML = '<i class="fas fa-times-circle" style="font-size: 24px; color: #c62828; margin-bottom: 10px;"></i><p style="margin: 0; color: #c62828; font-weight: bold;">Compra Anulada</p><small style="color: #555;">La captura de Yape no pudo ser verificada.</small>';
+                btnBoleta.style.display = 'none';
+                if (thanksMsg) thanksMsg.style.display = 'none';
+
+                localStorage.removeItem('moka_client_order_id');
+                localStorage.removeItem('moka_client_order_details');
+                myOrderId = null;
+                stopTracking();
+            }
+        }
+
+        // --- COMPRESIÓN DE IMÁGENES ---
+        function compressImage(file, callback) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = new Image();
+                img.onload = function () {
+                    const canvas = document.createElement('canvas');
+                    const max_size = 600; // tamaño máximo para reducir peso considerablemente
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > max_size) {
+                            height *= max_size / width;
+                            width = max_size;
+                        }
+                    } else {
+                        if (height > max_size) {
+                            width *= max_size / height;
+                            height = max_size;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Comprimir a JPG de 60% calidad (peso final aproximado: ~20-30KB)
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                    callback(dataUrl);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function validarImagen(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                document.getElementById('file-name').innerText = "Comprimiendo imagen...";
+
+                compressImage(file, (compressedBase64) => {
+                    imagenSubida = true;
+                    yapeBase64 = compressedBase64;
+                    document.getElementById('file-name').innerText = "Imagen optimizada con éxito";
+                });
+            } else {
+                imagenSubida = false;
+                yapeBase64 = "";
+                document.getElementById('file-name').innerText = "";
+            }
+        }
+
+        // --- OBTENER UBICACIÓN CLIENTE ---
+        function obtenerUbicacion() {
+            const btnLoc = document.getElementById('btn-location');
+            btnLoc.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Obteniendo ubicación...';
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        clienteDatos.lat = position.coords.latitude;
+                        clienteDatos.lng = position.coords.longitude;
+                        ubicacionLista = true;
+
+                        btnLoc.innerHTML = '<i class="fas fa-check-circle"></i> Ubicación Real Obtenida';
+                        btnLoc.classList.add('success');
+
+                        updateClientMarkerOnMap('my-temp', 'Mi Ubicación', clienteDatos.lat, clienteDatos.lng, 0);
+                        if (map) map.setView([clienteDatos.lat, clienteDatos.lng], 15);
+                    },
+                    (error) => {
+                        console.warn("Error u oposición al GPS real, simulando ubicación en Piura...", error);
+                        // Simular coordenadas cerca a la tienda
+                        const randomOffsetLat = (Math.random() - 0.5) * 0.008;
+                        const randomOffsetLng = (Math.random() - 0.5) * 0.008;
+                        clienteDatos.lat = shopCoords[0] + randomOffsetLat;
+                        clienteDatos.lng = shopCoords[1] + randomOffsetLng;
+                        ubicacionLista = true;
+
+                        btnLoc.innerHTML = '<i class="fas fa-info-circle"></i> Ubicación Simulada (Piura)';
+                        btnLoc.classList.add('success');
+
+                        updateClientMarkerOnMap('my-temp', 'Mi Ubicación (Simulada)', clienteDatos.lat, clienteDatos.lng, 0);
+                        if (map) map.setView([clienteDatos.lat, clienteDatos.lng], 15);
+                    },
+                    { enableHighAccuracy: true, timeout: 6000 }
+                );
+            } else {
+                alert("Tu navegador no soporta geolocalización.");
+            }
+        }
+
+        // --- RASTREO GPS CONTINUO ---
+        function startTracking(orderId) {
+            stopTracking(); // Limpiar rastreadores previos
+
+            if (navigator.geolocation) {
+                watchId = navigator.geolocation.watchPosition(
+                    (position) => {
+                        clienteDatos.lat = position.coords.latitude;
+                        clienteDatos.lng = position.coords.longitude;
+
+                        sendLocationMQTT(orderId);
+                    },
+                    (err) => {
+                        console.warn("watchPosition falló, transmitiendo simulación periódica:", err);
+                    },
+                    { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+                );
+            }
+
+            // Intervalo de respaldo para forzar actualizaciones periódicas
+            locationInterval = setInterval(() => {
+                if (myOrderStatus !== 3 && myOrderStatus !== -1) {
+                    // Simular leve movimiento si el GPS real no avanza (para simular trayectos)
+                    if (watchId === null && clienteDatos.lat && clienteDatos.lng) {
+                        clienteDatos.lat += (Math.random() - 0.5) * 0.0001;
+                        clienteDatos.lng += (Math.random() - 0.5) * 0.0001;
+                    }
+                    sendLocationMQTT(orderId);
+                }
+            }, 5000);
+        }
+
+        function stopTracking() {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+            if (locationInterval !== null) {
+                clearInterval(locationInterval);
+                locationInterval = null;
+            }
+        }
+
+        function sendLocationMQTT(orderId) {
+            if (clienteDatos.lat && clienteDatos.lng && mqttClient && mqttClient.connected) {
+                const locPayload = {
+                    id: orderId,
+                    nombre: clienteDatos.nombre,
+                    lat: clienteDatos.lat,
+                    lng: clienteDatos.lng,
+                    timestamp: Date.now()
+                };
+                mqttClient.publish(`moka_co/locations/${STORE_ID}/${orderId}`, JSON.stringify(locPayload));
+            }
+        }
+
+        // --- REGISTRO Y ENVÍO DEL PEDIDO ---
+        function confirmarPedido() {
+            const nombre = document.getElementById('cliente-nombre').value;
+            const direccion = document.getElementById('cliente-direccion').value;
+
+            if (!nombre || !direccion) {
+                alert("Por favor, ingresa tu nombre y dirección.");
+                return;
+            }
+            if (!ubicacionLista || !clienteDatos.lat) {
+                alert("Por favor, comparte tu ubicación primero.");
+                return;
+            }
+            if (!imagenSubida || !yapeBase64) {
+                alert("Por favor, sube la captura de tu Yape.");
+                return;
+            }
+
+            clienteDatos.nombre = nombre;
+            clienteDatos.direccion = direccion;
+
+            // Generar ID único
+            myOrderId = 'order_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+            localStorage.setItem('moka_client_order_id', myOrderId);
+
+            // Guardar detalles
+            const orderDetails = {
+                carrito: carrito,
+                total: total,
+                clienteDatos: clienteDatos
+            };
+            localStorage.setItem('moka_client_order_details', JSON.stringify(orderDetails));
+
+            cerrarModal('checkout-modal');
+            const modalPago = document.getElementById('payment-modal');
+            const statusText = document.getElementById('payment-status-text');
+            const loader = document.querySelector('.loader');
+
+            modalPago.style.display = 'flex';
+            statusText.innerText = "Conectando...";
+            loader.style.display = 'block';
+
+            connectMQTT();
+
+            setTimeout(() => {
+                statusText.innerText = "Enviando pedido y captura...";
+
+                const orderPayload = {
+                    id: myOrderId,
+                    nombre: clienteDatos.nombre,
+                    direccion: clienteDatos.direccion,
+                    carrito: carrito,
+                    total: total,
+                    yapeImg: yapeBase64,
+                    status: 0, // 0: Pendiente
+                    lat: clienteDatos.lat,
+                    lng: clienteDatos.lng,
+                    timestamp: Date.now()
+                };
+
+                // Publicar con RETAIN para que el vendedor pueda recibirlo si inicia sesión después
+                mqttClient.publish(`moka_co/orders/${STORE_ID}/${myOrderId}`, JSON.stringify(orderPayload), { retain: true, qos: 1 });
+
+                // Publicar estado inicial
+                mqttClient.publish(`moka_co/status/${STORE_ID}/${myOrderId}`, JSON.stringify({ id: myOrderId, status: 0 }), { retain: true, qos: 1 });
+
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                    statusText.innerText = "¡Pedido Enviado!";
+
+                    setTimeout(() => {
+                        modalPago.style.display = 'none';
+                        pedidoPagado = true;
+
+                        // Construir mensaje para WhatsApp
+                        let waText = `¡Hola! Acabo de realizar un pedido en MOKA'CO ☕\n\n`;
+                        waText += `👤 *Cliente:* ${clienteDatos.nombre}\n`;
+                        waText += `📍 *Dirección:* ${clienteDatos.direccion}\n\n`;
+                        waText += `🛒 *Detalle del Pedido:*\n`;
+                        carrito.forEach(item => {
+                            waText += `- 1x ${item.nombre} (S/ ${item.precio.toFixed(2)})\n`;
+                        });
+                        waText += `\n💰 *Total:* S/ ${total.toFixed(2)}\n\n`;
+                        waText += `📍 *Mi Ubicación en tiempo real (Google Maps):* https://www.google.com/maps?q=${clienteDatos.lat},${clienteDatos.lng}`;
+
+                        const encodedText = encodeURIComponent(waText);
+                        const waUrl = `https://api.whatsapp.com/send?phone=51902646067&text=${encodedText}`;
+
+                        // Configurar el botón de WhatsApp y hacerlo visible
+                        const waBtn = document.getElementById('btn-whatsapp-share');
+                        if (waBtn) {
+                            waBtn.href = waUrl;
+                            waBtn.style.display = 'flex';
+                        }
+
+                        // Cambiar la vista de la UI del cliente a pendiente
+                        document.getElementById('btn-pay').style.display = 'none';
+                        document.getElementById('customer-pending-msg').style.display = 'block';
+
+                        // Redirigir automáticamente a WhatsApp
+                        window.open(waUrl, '_blank');
+
+                        subscribeToClientTopics(myOrderId);
+                        startTracking(myOrderId);
+                    }, 1500);
+                }, 1500);
+            }, 1000);
+        }
+
+        // --- LÓGICA DE ROLES (VENDEDOR / CLIENTE) ---
         function toggleRole() {
             if (!isVendorMode) {
-                // Intentar entrar a modo vendedor
                 const password = prompt("Modo Vendedor protegido. Ingrese la contraseña:");
                 if (password === "admin123") {
                     activarVendedor();
@@ -870,7 +1475,6 @@
                     alert("Contraseña incorrecta. Acceso denegado.");
                 }
             } else {
-                // Salir de modo vendedor (volver a cliente)
                 desactivarVendedor();
             }
         }
@@ -878,32 +1482,288 @@
         function activarVendedor() {
             isVendorMode = true;
             const btn = document.getElementById('role-btn');
-            const vendorPanel = document.getElementById('vendor-panel');
-            const customerView = document.getElementById('customer-view');
-            
             btn.innerHTML = '<i class="fas fa-store"></i> Viendo como: Vendedor';
             btn.style.background = '#e65100';
-            vendorPanel.style.display = 'block';
-            if(customerView) customerView.style.display = 'none';
+
+            document.getElementById('vendor-panel').style.display = 'block';
+            document.getElementById('customer-view').style.display = 'none';
+
+            // Remover marcador temporal de cliente si existe
+            if (clientMarkers['my-temp']) {
+                map.removeLayer(clientMarkers['my-temp']);
+                delete clientMarkers['my-temp'];
+            }
+
+            connectMQTT();
+            subscribeToVendorTopics();
+
+            setTimeout(() => {
+                if (map) {
+                    map.invalidateSize();
+                    map.setView(shopCoords, 13);
+                }
+            }, 200);
+
+            renderVendorOrdersList();
         }
 
         function desactivarVendedor() {
             isVendorMode = false;
             const btn = document.getElementById('role-btn');
-            const vendorPanel = document.getElementById('vendor-panel');
-            const customerView = document.getElementById('customer-view');
-
             btn.innerHTML = '<i class="fas fa-user"></i> Viendo como: Cliente';
             btn.style.background = '#333';
-            vendorPanel.style.display = 'none';
-            if(customerView) customerView.style.display = 'block';
-            document.getElementById('order-notification').style.display = 'none'; 
+
+            document.getElementById('vendor-panel').style.display = 'none';
+            document.getElementById('customer-view').style.display = 'block';
+            document.getElementById('order-notification').style.display = 'none';
+
+            unsubscribeFromVendorTopics();
+
+            // Limpiar marcadores de clientes
+            for (let id in clientMarkers) {
+                map.removeLayer(clientMarkers[id]);
+            }
+            clientMarkers = {};
+
+            setTimeout(() => {
+                if (map) {
+                    map.invalidateSize();
+                    map.setView(shopCoords, 14);
+                }
+            }, 200);
+
+            checkExistingOrder();
         }
 
-        // --- LÓGICA DEL CARRITO ---
+        // --- LOGICA DEL VENDEDOR ---
+        function subscribeToVendorTopics() {
+            if (mqttClient && mqttClient.connected) {
+                mqttClient.subscribe(`moka_co/orders/${STORE_ID}/+`);
+                mqttClient.subscribe(`moka_co/locations/${STORE_ID}/+`);
+            }
+        }
+
+        function unsubscribeFromVendorTopics() {
+            if (mqttClient && mqttClient.connected) {
+                mqttClient.unsubscribe(`moka_co/orders/${STORE_ID}/+`);
+                mqttClient.unsubscribe(`moka_co/locations/${STORE_ID}/+`);
+            }
+        }
+
+        function handleVendorIncomingOrder(data) {
+            if (!data || !data.id) return;
+
+            const isNew = !ordersMap[data.id];
+            ordersMap[data.id] = data;
+
+            // Alerta visual de nuevo pedido pendiente
+            if (isNew && data.status === 0) {
+                document.getElementById('order-notification').style.display = 'block';
+                // Seleccionar automáticamente el pedido nuevo
+                selectVendorOrder(data.id);
+            }
+
+            if (data.lat && data.lng) {
+                updateClientMarkerOnMap(data.id, data.nombre, data.lat, data.lng, data.status);
+            }
+
+            renderVendorOrdersList();
+
+            if (selectedOrderId === data.id) {
+                updateSelectedOrderDetailsPane();
+            }
+        }
+
+        function handleVendorIncomingLocation(data) {
+            if (!data || !data.id) return;
+
+            if (ordersMap[data.id]) {
+                ordersMap[data.id].lat = data.lat;
+                ordersMap[data.id].lng = data.lng;
+            }
+
+            const status = ordersMap[data.id] ? ordersMap[data.id].status : 0;
+            updateClientMarkerOnMap(data.id, ordersMap[data.id].nombre || data.nombre || "Cliente", data.lat, data.lng, status);
+        }
+
+        function renderVendorOrdersList() {
+            const listContainer = document.getElementById('vendor-orders-list');
+            const badge = document.getElementById('order-count-badge');
+            listContainer.innerHTML = "";
+
+            const ordersArray = Object.values(ordersMap).sort((a, b) => b.timestamp - a.timestamp);
+            if (badge) badge.innerText = ordersArray.length;
+
+            if (ordersArray.length === 0) {
+                listContainer.innerHTML = '<div style="text-align: center; color: #888; font-size: 11px; padding: 10px 0;">No hay pedidos activos</div>';
+                return;
+            }
+
+            ordersArray.forEach(order => {
+                const isActive = (selectedOrderId === order.id) ? "active" : "";
+                let statusText = "Pendiente";
+                let statusClass = "status-pendiente";
+
+                if (order.status === 1) { statusText = "Preparando"; statusClass = "status-preparando"; }
+                else if (order.status === 2) { statusText = "En Camino"; statusClass = "status-camino"; }
+                else if (order.status === 3) { statusText = "Entregado"; statusClass = "status-entregado"; }
+                else if (order.status === -1) { statusText = "Anulado"; statusClass = "status-rechazado"; }
+
+                const itemsCount = order.carrito ? order.carrito.length : 0;
+
+                listContainer.innerHTML += `
+                    <div class="vendor-order-item ${isActive}" onclick="selectVendorOrder('${order.id}')">
+                        <div>
+                            <div class="vendor-order-name">${order.nombre}</div>
+                            <div class="vendor-order-meta">${itemsCount} prod. | S/ ${order.total.toFixed(2)}</div>
+                        </div>
+                        <span class="order-status-badge ${statusClass}">${statusText}</span>
+                    </div>
+                `;
+            });
+        }
+
+        function selectVendorOrder(orderId) {
+            selectedOrderId = orderId;
+            renderVendorOrdersList();
+            updateSelectedOrderDetailsPane();
+
+            const order = ordersMap[orderId];
+            if (order && order.lat && order.lng && map) {
+                map.panTo([order.lat, order.lng]);
+                if (clientMarkers[orderId]) {
+                    clientMarkers[orderId].openPopup();
+                }
+            }
+        }
+
+        function updateSelectedOrderDetailsPane() {
+            const pane = document.getElementById('vendor-selected-order-details');
+            const title = document.getElementById('selected-client-title');
+            const itemsDiv = document.getElementById('selected-order-items');
+            const btnVerificar = document.getElementById('btn-verificar-pago');
+
+            const order = ordersMap[selectedOrderId];
+            if (!order) {
+                pane.style.display = "none";
+                return;
+            }
+
+            pane.style.display = "block";
+            title.innerHTML = `Cliente: <strong>${order.nombre}</strong> <br><small>Dirección: ${order.direccion}</small>`;
+
+            let itemsHtml = "<strong>Detalle:</strong><ul style='margin: 4px 0 0 15px; padding: 0;'>";
+            order.carrito.forEach(item => {
+                itemsHtml += `<li>1x ${item.nombre} (S/ ${item.precio.toFixed(2)})</li>`;
+            });
+            itemsHtml += `</ul><div style='margin-top: 6px; font-weight: bold;'>Total: S/ ${order.total.toFixed(2)}</div>`;
+            itemsDiv.innerHTML = itemsHtml;
+
+            // Mostrar botón Yape solo si el pago está pendiente
+            if (order.status === 0) {
+                btnVerificar.style.display = "block";
+                btnVerificar.innerHTML = `<i class="fas fa-search"></i> Verificar Pago Pendiente`;
+            } else {
+                btnVerificar.style.display = "none";
+            }
+        }
+
+        function updateClientMarkerOnMap(orderId, name, lat, lng, status) {
+            if (!map) return;
+
+            let statusText = "Pendiente";
+            if (status === 1) statusText = "Preparando";
+            else if (status === 2) statusText = "En Camino";
+            else if (status === 3) statusText = "Entregado";
+            else if (status === -1) statusText = "Anulado";
+
+            if (clientMarkers[orderId]) {
+                clientMarkers[orderId].setLatLng([lat, lng]);
+                clientMarkers[orderId].setPopupContent(`<b>Cliente: ${name}</b><br>Estado: ${statusText}`);
+            } else {
+                const markerIcon = L.divIcon({
+                    html: clientSVG,
+                    className: 'custom-client-icon',
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 32],
+                    popupAnchor: [0, -32]
+                });
+
+                const marker = L.marker([lat, lng], { icon: markerIcon }).addTo(map);
+                marker.bindPopup(`<b>Cliente: ${name}</b><br>Estado: ${statusText}`);
+                clientMarkers[orderId] = marker;
+            }
+        }
+
+        // --- VENDOR ACCIONES ---
+        function abrirVerificarPago() {
+            const order = ordersMap[selectedOrderId];
+            if (!order) return;
+
+            document.getElementById('verificar-modal').style.display = 'flex';
+            document.getElementById('verificar-img').src = order.yapeImg || "https://via.placeholder.com/300x500?text=Sin+Captura";
+        }
+
+        function aprobarPago() {
+            if (!selectedOrderId) return;
+            const order = ordersMap[selectedOrderId];
+            order.status = 1; // Preparando
+
+            // Notificar al cliente mediante el canal MQTT de estatus
+            mqttClient.publish(`moka_co/status/${STORE_ID}/${selectedOrderId}`, JSON.stringify({ id: selectedOrderId, status: 1 }), { retain: true, qos: 1 });
+            // Publicar pedido actualizado para mantener el historial
+            mqttClient.publish(`moka_co/orders/${STORE_ID}/${selectedOrderId}`, JSON.stringify(order), { retain: true, qos: 1 });
+
+            cerrarModal('verificar-modal');
+            document.getElementById('order-notification').style.display = 'none';
+
+            updateClientMarkerOnMap(selectedOrderId, order.nombre, order.lat, order.lng, 1);
+            updateSelectedOrderDetailsPane();
+            renderVendorOrdersList();
+
+            alert(`Pago aprobado para el cliente: ${order.nombre}`);
+        }
+
+        function rechazarPago() {
+            if (!selectedOrderId) return;
+            const order = ordersMap[selectedOrderId];
+            order.status = -1; // Anulado
+
+            mqttClient.publish(`moka_co/status/${STORE_ID}/${selectedOrderId}`, JSON.stringify({ id: selectedOrderId, status: -1 }), { retain: true, qos: 1 });
+            mqttClient.publish(`moka_co/orders/${STORE_ID}/${selectedOrderId}`, JSON.stringify(order), { retain: true, qos: 1 });
+
+            cerrarModal('verificar-modal');
+            document.getElementById('order-notification').style.display = 'none';
+
+            updateClientMarkerOnMap(selectedOrderId, order.nombre, order.lat, order.lng, -1);
+            updateSelectedOrderDetailsPane();
+            renderVendorOrdersList();
+
+            alert(`Pedido de ${order.nombre} rechazado.`);
+        }
+
+        function setStatus(stepNumber) {
+            if (!selectedOrderId) {
+                alert("Selecciona un pedido primero.");
+                return;
+            }
+            const order = ordersMap[selectedOrderId];
+            if (!order) return;
+
+            order.status = stepNumber;
+
+            mqttClient.publish(`moka_co/status/${STORE_ID}/${selectedOrderId}`, JSON.stringify({ id: selectedOrderId, status: stepNumber }), { retain: true, qos: 1 });
+            mqttClient.publish(`moka_co/orders/${STORE_ID}/${selectedOrderId}`, JSON.stringify(order), { retain: true, qos: 1 });
+
+            updateClientMarkerOnMap(selectedOrderId, order.nombre, order.lat, order.lng, stepNumber);
+            updateSelectedOrderDetailsPane();
+            renderVendorOrdersList();
+        }
+
+        // --- CARRITO COMPONENTES ---
         function addToCart(nombre, precio) {
-            if (pedidoPagado) {
-                alert("Ya tienes un pedido en curso. Espera a que sea entregado o recarga la página.");
+            if (myOrderId && myOrderStatus !== 3 && myOrderStatus !== -1) {
+                alert("Ya tienes un pedido en curso. Espera a que sea entregado.");
                 return;
             }
             carrito.push({ nombre, precio });
@@ -911,6 +1771,7 @@
             actualizarCarritoUI();
         }
 
+        // --- ACTUALIZAR CARRITO EN LA INTERFAZ ---
         function actualizarCarritoUI() {
             const contenedor = document.getElementById('cart-items');
             contenedor.innerHTML = '';
@@ -926,7 +1787,6 @@
             document.getElementById('checkout-total').innerText = `S/ ${total.toFixed(2)}`;
         }
 
-        // --- CHECKOUT Y FLUJO DE COMPRA ---
         function abrirCheckout() {
             if (carrito.length === 0) {
                 alert("Tu carrito está vacío. Agrega productos primero.");
@@ -935,143 +1795,52 @@
             document.getElementById('checkout-modal').style.display = 'flex';
         }
 
-        function simularUbicacion() {
-            const btnLoc = document.getElementById('btn-location');
-            btnLoc.innerHTML = '<i class="fas fa-check-circle"></i> Ubicación obtenida';
-            btnLoc.classList.add('success');
-            ubicacionLista = true;
-        }
-
-        function validarImagen(input) {
-            if(input.files && input.files[0]) {
-                imagenSubida = true;
-                // Create object URL to preview the image uploaded by the customer in vendor mode
-                imgUrl = URL.createObjectURL(input.files[0]);
-                document.getElementById('file-name').innerText = "Imagen cargada: " + input.files[0].name;
+        // --- MODALES & BOLETAS ---
+        function mostrarBoleta() {
+            let orderToGenerate = null;
+            if (isVendorMode) {
+                orderToGenerate = ordersMap[selectedOrderId];
             } else {
-                imagenSubida = false;
-                imgUrl = "";
-                document.getElementById('file-name').innerText = "";
+                orderToGenerate = {
+                    nombre: clienteDatos.nombre,
+                    direccion: clienteDatos.direccion,
+                    carrito: carrito,
+                    total: total,
+                    timestamp: Date.now()
+                };
             }
-        }
 
-        function confirmarPedido() {
-            const nombre = document.getElementById('cliente-nombre').value;
-            const direccion = document.getElementById('cliente-direccion').value;
-
-            if (!nombre || !direccion) {
-                alert("Por favor, ingresa tu nombre y dirección.");
-                return;
-            }
-            if (!ubicacionLista) {
-                alert("Por favor, comparte tu ubicación.");
-                return;
-            }
-            if (!imagenSubida) {
-                alert("Por favor, sube la captura de tu Yape.");
+            if (!orderToGenerate || !orderToGenerate.nombre) {
+                alert("No hay boleta disponible.");
                 return;
             }
 
-            clienteDatos.nombre = nombre;
-            clienteDatos.direccion = direccion;
-
-            // Ocultar modal de checkout y mostrar modal de carga
-            cerrarModal('checkout-modal');
-            const modalPago = document.getElementById('payment-modal');
-            const statusText = document.getElementById('payment-status-text');
-            const loader = document.querySelector('.loader');
-
-            modalPago.style.display = 'flex';
-            statusText.innerText = "Enviando captura...";
-            loader.style.display = 'block';
-
-            // Simular envío de pedido (2 segundos)
-            setTimeout(() => {
-                loader.style.display = 'none';
-                statusText.innerText = "¡Enviado al Vendedor!";
-
-                setTimeout(() => {
-                    modalPago.style.display = 'none';
-                    pedidoPagado = true; // prevent more cart additions
-
-                    // Cambiar UI Cliente a pendiente
-                    document.getElementById('btn-pay').style.display = 'none';
-                    document.getElementById('customer-pending-msg').style.display = 'block';
-
-                    // Notificar al Vendedor
-                    notificarVendedor();
-                    document.getElementById('btn-verificar-pago').style.display = 'block';
-                }, 1500);
-            }, 2000);
+            generarBoleta(orderToGenerate);
+            document.getElementById('boleta-modal').style.display = 'flex';
         }
 
-        function notificarVendedor() {
-            // Activa la alerta visual roja en el panel del vendedor
-            document.getElementById('order-notification').style.display = 'block';
-        }
-        
-        // --- VENDOR VERIFICACIÓN DE PAGO ---
-        function abrirVerificarPago() {
-            document.getElementById('verificar-modal').style.display = 'flex';
-            document.getElementById('verificar-img').src = imgUrl || "https://via.placeholder.com/300x500?text=Sin+Imagen";
-        }
-
-        function aprobarPago() {
-            cerrarModal('verificar-modal');
-            document.getElementById('btn-verificar-pago').style.display = 'none';
-            document.getElementById('order-notification').style.display = 'none';
-            
-            // Actualizar vista del cliente (se revelará cuando cierre sesión de vendor o abra de otro lado, acá está unificado)
-            document.getElementById('customer-pending-msg').style.display = 'none';
-            document.getElementById('btn-boleta').style.display = 'flex';
-            
-            setStatus(1); // Preparando pedido
-            generarBoleta(clienteDatos.nombre, clienteDatos.direccion);
-            alert("Pago aprobado. Se generó la boleta y el pedido está Preparándose.");
-        }
-
-        function rechazarPago() {
-            cerrarModal('verificar-modal');
-            document.getElementById('btn-verificar-pago').style.display = 'none';
-            document.getElementById('order-notification').style.display = 'none';
-            
-            // Cliente ve compra anulada
-            const pendingMsg = document.getElementById('customer-pending-msg');
-            pendingMsg.style.background = '#ffebee';
-            pendingMsg.style.borderColor = '#c62828';
-            pendingMsg.innerHTML = '<i class="fas fa-times-circle" style="font-size: 24px; color: #c62828; margin-bottom: 10px;"></i><p style="margin: 0; color: #c62828; font-weight: bold;">Compra Anulada</p><small style="color: #555;">La captura de Yape no pudo ser verificada.</small>';
-            
-            alert("Pago rechazado. La compra fue anulada.");
-        }
-
-        // --- LÓGICA DE BOLETA ---
-        function generarBoleta(nombre, direccion) {
+        function generarBoleta(order) {
             const ticketDetails = document.getElementById('ticket-details');
-            let fecha = new Date().toLocaleString('es-PE');
+            let fecha = new Date(order.timestamp || Date.now()).toLocaleString('es-PE');
             let htmlBoleta = `
                 <p><strong>Fecha:</strong> ${fecha}</p>
-                <p><strong>Cliente:</strong> ${nombre}</p>
-                <p><strong>Entrega en:</strong> ${direccion}</p>
+                <p><strong>Cliente:</strong> ${order.nombre}</p>
+                <p><strong>Entrega en:</strong> ${order.direccion}</p>
                 <p><strong>Estado Pago:</strong> VERIFICADO (YAPE)</p>
                 <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
             `;
-            
-            htmlBoleta += `<table style="width: 100%; text-align: left;"><tr><th>Cant.</th><th>Descripción</th><th style="text-align:right;">Importe</th></tr>`;
 
-            carrito.forEach(item => {
+            htmlBoleta += `<table style="width: 100%; text-align: left; font-size: 11px;"><tr><th>Cant.</th><th>Descripción</th><th style="text-align:right;">Importe</th></tr>`;
+            order.carrito.forEach(item => {
                 htmlBoleta += `<tr><td>1</td><td>${item.nombre}</td><td style="text-align:right;">S/ ${item.precio.toFixed(2)}</td></tr>`;
             });
-
             htmlBoleta += `</table><hr style="border-top: 1px dashed #ccc; margin: 10px 0;">`;
-            htmlBoleta += `<h3 style="text-align:right; margin:0;">TOTAL PAGADO: S/ ${total.toFixed(2)}</h3>`;
+            htmlBoleta += `<h3 style="text-align:right; margin:0; font-size: 14px;">TOTAL PAGADO: S/ ${order.total.toFixed(2)}</h3>`;
+
             ticketDetails.innerHTML = htmlBoleta;
         }
 
-        function mostrarBoleta() { document.getElementById('boleta-modal').style.display = 'flex'; }
-        function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
-
-        // --- LÓGICA DEL TRACKER (VENDEDOR) ---
-        function setStatus(stepNumber) {
+        function setStatusTrackerUI(stepNumber) {
             document.getElementById('step-1').classList.remove('active');
             document.getElementById('step-2').classList.remove('active');
             document.getElementById('step-3').classList.remove('active');
@@ -1085,12 +1854,12 @@
 
             const thanksMsg = document.getElementById('thanks-msg');
             if (thanksMsg) {
-                if (stepNumber === 3) {
-                    thanksMsg.style.display = 'block';
-                } else {
-                    thanksMsg.style.display = 'none';
-                }
+                thanksMsg.style.display = (stepNumber === 3) ? 'block' : 'none';
             }
+        }
+
+        function cerrarModal(id) {
+            document.getElementById(id).style.display = 'none';
         }
     </script>
 </body>
